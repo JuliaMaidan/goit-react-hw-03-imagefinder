@@ -2,6 +2,7 @@ import { Component } from 'react';
 import styles from "./searchbar.module.scss"
 import PropTypes from 'prop-types';
 import { toast } from 'react-toast';
+import { FaSearch } from 'react-icons/fa';
 
 export class Searchbar extends Component {
 
@@ -29,7 +30,7 @@ export class Searchbar extends Component {
             <header className={styles.header}>
                 <form className={styles.form} onSubmit={this.handleSubmit}>
                     <button className={styles.btn} type="submit">
-                        <span className={styles.btnLabel}>Search</span>
+                        <FaSearch className={styles.btnLabel} />
                     </button>
 
                     <input className={styles.input}
