@@ -5,7 +5,7 @@ import { Spinner } from "./Loader/Loader";
 import { Modal } from "./Modal/Modal";
 import { Button } from "./Button/Button";
 import { ToastContainer, toast } from 'react-toast';
-import { FetchImages } from './fetchImages';
+import { fetchImages } from '../services/fetchImages';
 
 
 export class App extends Component {
@@ -21,45 +21,11 @@ export class App extends Component {
   }
 
   handleFormSubmit = (search) => {
-    this.setState({ search })
-  }
-
-    componentDidUpdate(prevProps, prevState) {
-    if (prevState.search !== this.state.search) {
-      this.setState({ loading: true })
-
-      FetchImages(this.state.search, 1)
-        .then(data => {
-          this.setState({
-            images: data,
-            loading: false,
-            error: null,
-            page: 1
-          });
-        })
-        .catch(error => {
-          toast.error(error.message);
-          this.setState({ loading: false, error });
-        });
-    }
+    this.setState({ search, page: 1 })
   }
 
   onLoadMore = () => {
-    const { page, search } = this.state;
-
-    this.setState({ loading: true });
-    FetchImages(search, page + 1)
-      .then(data => {
-        this.setState(prevState => ({
-          images: [...prevState.images, ...data],
-          page: prevState.page + 1,
-          loading: false
-        }));
-      })
-      .catch(error => {
-        toast.error(error.message);
-        this.setState({ loading: false, error });
-      });
+    this.setState(prevState => ({ page: prevState.page + 1 }));
   };
 
   toggleModal = (selectedImage) => {
@@ -67,6 +33,30 @@ export class App extends Component {
       showModal: !showModal,
       selectedImage,
     }))
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    
+  if (prevState.search !== this.state.search) {
+    this.setState({ images: [], page: 1 });
+  }
+
+  if (prevState.search !== this.state.search || prevState.page !== this.state.page) {
+    this.setState({ loading: true })
+
+    fetchImages(this.state.search, this.state.page)
+      .then(data => {
+        this.setState(prevState => ({
+          images: [...prevState.images, ...data],
+          loading: false,
+          error: null,
+        }));
+      })
+      .catch(error => {
+        toast.error(error.message);
+        this.setState({ loading: false, error });
+      });
+    }
   }
 
   render() {
@@ -87,4 +77,3 @@ export class App extends Component {
     )
   }
 };
-
