@@ -5,6 +5,7 @@ import { Spinner } from "./Loader/Loader";
 import { Modal } from "./Modal/Modal";
 import { Button } from "./Button/Button";
 import { ToastContainer, toast } from 'react-toast';
+import { FetchImages } from './fetchImages';
 
 
 export class App extends Component {
@@ -23,35 +24,43 @@ export class App extends Component {
     this.setState({ search })
   }
 
-  componentDidUpdate(prevProps, prevState) {
+    componentDidUpdate(prevProps, prevState) {
     if (prevState.search !== this.state.search) {
       this.setState({ loading: true })
 
-      const KEY = '33056563-cc044f40a294fc1629405232d'
-      const q = this.state.search
-      fetch(`https://pixabay.com/api/?q=${q}&page=1&key=${KEY}&image_type=photo&orientation=horizontal&per_page=12`)
-          .then(response => response.json())
-          .then(data => {
-          if (data.hits.length === 0) {
-            toast.error("We don't have any matches.")
-          }
-          this.setState({ images: data.hits, loading: false, error: null })
+      FetchImages(this.state.search, 1)
+        .then(data => {
+          this.setState({
+            images: data,
+            loading: false,
+            error: null,
+            page: 1
+          });
         })
         .catch(error => {
-          toast.error("Something went wrong. Please try again later.")
-          this.setState({ loading: false, error })
-        })
+          toast.error(error.message);
+          this.setState({ loading: false, error });
+        });
     }
   }
 
   onLoadMore = () => {
-    this.setState(prevState => ({page: prevState.page + 1, loading: true}), () => {
-      const { page } = this.state
-      fetch(`https://pixabay.com/api/?q=${this.state.search}&page=${page}&key=33056563-cc044f40a294fc1629405232d&image_type=photo&orientation=horizontal&per_page=12`)
-          .then(response => response.json())
-          .then(data => this.setState(prevState => ({images: [...prevState.images, ...data.hits], loading: false})))
-    })
-  }
+    const { page, search } = this.state;
+
+    this.setState({ loading: true });
+    FetchImages(search, page + 1)
+      .then(data => {
+        this.setState(prevState => ({
+          images: [...prevState.images, ...data],
+          page: prevState.page + 1,
+          loading: false
+        }));
+      })
+      .catch(error => {
+        toast.error(error.message);
+        this.setState({ loading: false, error });
+      });
+  };
 
   toggleModal = (selectedImage) => {
     this.setState(({ showModal }) => ({
@@ -65,10 +74,10 @@ export class App extends Component {
     return (
       <div>
         <Searchbar onSubmit={this.handleFormSubmit} />
-        <ImageGallery
+        {images.length > 0 && <ImageGallery
           images={images}
           toggleModal={this.toggleModal}
-        />
+        />}
         {!loading && images.length > 0 && images.length % 12 === 0 && <Button onClick={this.onLoadMore} />}
         {loading && <Spinner />}
         {showModal && <Modal onClose={this.toggleModal}> 
